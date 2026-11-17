@@ -1,187 +1,60 @@
-# Advanced C Shell 💻🐚
+# Advanced C Shell
 
-A **feature-rich shell implementation** in C that replicates Unix/Linux shell functionality, demonstrating deep understanding of process management, system calls, and command-line interfaces.
+A Unix shell written from scratch in C on top of POSIX system calls (`fork`, `execvp`, `waitpid`, `pipe`, `dup2`, `sigaction`). It runs system commands and a set of custom built-ins, and handles pipes, redirection, background jobs and job control.
 
-## 🎯 Project Overview
-This project implements a fully functional shell with advanced features comparable to bash/zsh. It processes user commands, manages processes, handles I/O redirection, pipes, and background job execution—core concepts in operating systems.
+Linux only: several commands read from `/proc`.
 
-## ✨ Key Features
-- 🔧 **Command execution** - Execute built-in and external commands
-- 📢 **I/O Redirection** - Input (`<`) and output (`>`, `>>`) redirection
-- 🔀 **Piping** - Chain commands with pipes (`|`)
-- 🔄 **Background execution** - Run jobs in background (`&`)
-- 📋 **Job control** - List, manage, and control background processes
-- 🏠 **Built-in commands** - cd, pwd, echo, exit, jobs, fg, bg, etc.
-- 🔍 **Command history** - Navigate previous commands
-- ⚙️ **Environment variables** - Set, modify, and use environment variables
-- 💬 **Prompt customization** - Configurable shell prompt
-- 🛡️ **Error handling** - Graceful error management
-
-## 🛠️ Tech Stack
-- **C** - Core implementation
-- **POSIX APIs** - Process management (fork, exec)
-- **Linux/Unix** - Operating system
-- **Make** - Build system
-
-## 📦 Installation & Setup
+## Build and run
 
 ```bash
-# Clone the repository
-git clone https://github.com/Pavaneswar6699/Advanced-C-Shell.git
-cd Advanced-C-Shell
-
-# Compile the shell
-make clean
-make
-
-# Run the shell
-./shell
-
-# Or compile with debug info
-make DEBUG=1
+make        # compiles every .c file into ./a.out
+./a.out
 ```
 
-## 🏗️ Project Structure
-```
-Advanced-C-Shell/
-├── src/
-│   ├── shell.c          # Main shell loop and initialization
-│   ├── parser.c         # Command parsing logic
-│   ├── executor.c       # Command execution
-│   ├── builtins.c       # Built-in command implementations
-│   ├── redirections.c   # I/O redirection handling
-│   ├── pipes.c          # Pipe implementation
-│   └── jobs.c           # Background job management
-├── include/
-│   ├── shell.h
-│   ├── parser.h
-│   ├���─ executor.h
-│   └── utils.h
-├── Makefile
-└── README.md
-```
+The directory you start the shell from is treated as home (`~`), and `.myshrc` is read from there.
 
-## 🔧 Built-in Commands
+## What it supports
 
-| Command | Description |
-|---------|-------------|
-| `cd <path>` | Change directory |
-| `pwd` | Print working directory |
-| `echo <args>` | Display text |
-| `exit` | Exit the shell |
-| `export VAR=value` | Set environment variable |
-| `unset VAR` | Unset variable |
-| `jobs` | List background jobs |
-| `fg [job_id]` | Bring job to foreground |
-| `bg [job_id]` | Resume job in background |
-| `help` | Show available commands |
+**Running commands**
+- Any system command, run in the foreground or in the background with `&`
+- Several commands on one line separated by `;`
+- Pipes of any length (`cat file | grep x | wc -l`)
+- Input and output redirection: `<`, `>`, `>>`, also combined with pipes
+- A message when a background process finishes, showing whether it exited normally
+- A prompt of the form `<user@host:path>`, with paths under home shown relative to `~`
 
-## 📖 Usage Examples
+**Built-in commands**
 
-```bash
-# Basic command execution
-$ ls -la
-$ mkdir my_directory
+| Command | What it does |
+|---|---|
+| `hop <path>` | Change directory. Supports `~`, `-`, `.` and `..` |
+| `reveal [-a] [-l] <path>` | List a directory, colour-coded (directories blue, executables green) |
+| `seek [-d] [-f] [-e] <name> [dir]` | Recursively search for files or directories by name. `-e` opens the file or enters the directory when there is exactly one match |
+| `log` / `log purge` / `log execute <n>` | Show command history saved across sessions, clear it, or re-run an earlier command |
+| `proclore [pid]` | Show a process's PID, state, process group, virtual memory and executable path, read from `/proc` |
+| `activities` | List processes started by this shell with their PID and state |
+| `ping <pid> <signal>` | Send a signal to a process |
+| `fg <pid>` / `bg <pid>` | Bring a job to the foreground, or resume a stopped job in the background |
+| `neonate -n <secs>` | Print the most recently created PID every `<secs>` seconds until you press `x` (switches the terminal to raw mode) |
+| `iMan <command>` | Fetch a man page from `man.he.net` over a raw TCP socket using a hand-written HTTP GET request |
 
-# I/O Redirection
-$ echo "Hello" > file.txt
-$ cat < input.txt > output.txt
-$ echo "Append" >> file.txt
+**Signals**
+- `Ctrl-C` sends SIGINT to the foreground process, not to the shell
+- `Ctrl-Z` stops the foreground process and moves it to the background
+- `Ctrl-D` kills all child processes and exits the shell
 
-# Piping
-$ cat file.txt | grep "pattern" | wc -l
-$ ps aux | grep "process_name"
+**Config file**
+- Aliases and simple shell functions are loaded from `.myshrc` at startup.
 
-# Background execution
-$ long_running_task &
-$ jobs
-$ fg 1
+## Code layout
 
-# Environment variables
-$ export MY_VAR="value"
-$ echo $MY_VAR
-
-# Multiple commands
-$ command1; command2 && command3
-```
-
-## 🔍 Core Concepts Implemented
-
-### 1. Process Management
-- **fork()** - Create child processes
-- **execvp()** - Execute external commands
-- **wait()/waitpid()** - Wait for child processes
-- **signal handling** - Handle signals (SIGCHLD, SIGINT)
-
-### 2. Command Parsing
-- Tokenization and argument parsing
-- Special character handling
-- Quote and escape sequence processing
-
-### 3. I/O Redirection
-- File descriptor manipulation
-- Input/output file handling
-- Append vs overwrite modes
-
-### 4. Pipe Implementation
-- Bidirectional communication between processes
-- Multiple pipe chains
-- Data flow synchronization
-
-### 5. Job Control
-- Background process tracking
-- Job state management
-- Foreground/background switching
-
-## 🧪 Testing
-
-```bash
-# Basic functionality tests
-./shell < test_commands.txt
-
-# Interactive testing
-./shell
-$ pwd
-$ ls
-$ echo "test"
-$ exit
-```
-
-## 🚀 Performance Features
-- ✅ Efficient memory usage
-- ✅ Minimal process overhead
-- ✅ Fast command parsing
-- ✅ Optimized I/O operations
-
-## 🎓 Learning Outcomes
-This project demonstrates expertise in:
-- Advanced C programming
-- Process control and management
-- System call interfaces
-- Signal handling
-- File descriptor manipulation
-- Parser implementation
-- Command-line interface design
-
-## 🚀 Future Enhancements
-- [ ] Command history with file persistence
-- [ ] Tab completion
-- [ ] Advanced job scheduling
-- [ ] Script execution mode
-- [ ] Configuration file support
-
-## 🤝 Contributing
-Contributions welcome! Potential areas:
-- Additional built-in commands
-- Performance optimizations
-- Better error messages
-- Test suite expansion
-
-## 📄 License
-This project is licensed under the MIT License.
-
-## 👨‍💻 Author
-**Pavaneswar** - [GitHub Profile](https://github.com/Pavaneswar6699)
-
----
-⭐ Learning shell internals? Please star this project!
+| File | Responsibility |
+|---|---|
+| `main.c` | Startup and the read–execute loop |
+| `command.c` | Parsing (`;`, `&`, `|`, redirection), dispatch to built-ins, `fork`/`exec` |
+| `signal.c` | `sigaction` handlers for SIGCHLD, SIGINT, SIGTSTP and SIGQUIT |
+| `linkedlist.c` | List of child processes used by `activities`, `fg` and `bg` |
+| `display.c` | Prompt |
+| `hop.c`, `reveal.c`, `seek.c`, `log.c`, `proclore.c`, `neonate.c`, `iman.c` | One built-in each |
+| `custom.c` | `.myshrc` aliases and functions |
+| `color.c` | Terminal colour helpers |
